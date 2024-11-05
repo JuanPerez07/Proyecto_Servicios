@@ -77,7 +77,7 @@ class Subscriber:
                 time.sleep(0.1)  # Espera breve antes de verificar nuevamente
             return self.msg
         return None  # En caso de que no haya conexión o exista el topic
-
+"""
 if __name__ == "__main__":
     topic = "/emg"
     while True:
@@ -87,3 +87,4 @@ if __name__ == "__main__":
         print(f"Mensaje recibido del topic '{topic}': {msg}")
         if msg is None:
             break
+"""
