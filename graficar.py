@@ -22,11 +22,17 @@ try:
     # Graficar el canal ext_value
     plt.plot(df['tiempo'], df['ext_value'], label='Canal Ext', color='r')
 
+    # Resaltar valores concretos con triangulos negros
+    plt.scatter(df['tiempo'], df['flex_value'], color='black', marker='v', label='Flex values', zorder=5)
+    plt.scatter(df['tiempo'], df['ext_value'], color='brown', marker='v', label='Extension values', zorder=5)
+
     # Agregar etiquetas y título
     plt.xlabel('Tiempo (s)')
     plt.ylabel('Voltaje (V)')
     plt.title('Señales EMG de los Canales Flex y Ext')
-    plt.legend()
+    
+    # Mostrar leyenda en la esquina inferior derecha, con tamaño reducido y cuadro pequeño
+    plt.legend(loc='lower left', fontsize=6, frameon=True, borderpad=1, borderaxespad=0.5)
 
     # Mostrar el gráfico
     plt.grid(True)
@@ -41,43 +47,4 @@ except pd.errors.EmptyDataError:
 except Exception as e:
     print(f"Ocurrió un error al leer el archivo: {e}")
 
-"""
-# Ruta del archivo CSV
-file_path = FILE
-
-# Leer el archivo CSV, saltando las filas problemáticas
-data = pd.read_csv(file_path, header=None, names=["Tiempo", "Valor"], on_bad_lines='skip')
-
-# Filtrar solo las filas donde "Tiempo" y "Valor" sean numéricos
-data = data[pd.to_numeric(data["Tiempo"], errors='coerce').notna()]
-data = data[pd.to_numeric(data["Valor"], errors='coerce').notna()]
-
-# Convertir la columna "Tiempo" a enteros y "Valor" a flotantes
-data["Tiempo"] = data["Tiempo"].astype(int)
-data["Valor"] = data["Valor"].astype(float)
-# corregir indices del tiempo y escalar el voltaje
-data = correctTime(data)
-data = scaleVoltage(data)
-# Graficar los datos interpolados
-plt.figure(figsize=(10, 5))
-plt.plot(data.index, data["Valor"], label="Voltaje", color="b")
-
-# Destacar los puntos capturados originalmente con triángulos rojos
-original_points = data[pd.to_numeric(data["Tiempo"], errors='coerce').notna()]
-original_points = data[pd.to_numeric(data["Valor"], errors='coerce').notna()]
-original_points["Tiempo"] = original_points["Tiempo"].astype(int)
-original_points["Valor"] = original_points["Valor"].astype(float)
-
-# Graficar los puntos originales
-plt.plot(original_points["Tiempo"], original_points["Valor"], 'r^', label="Datos Capturados")
-
-# Etiquetas y título de la gráfica
-plt.xlabel("Tiempo")
-plt.ylabel("Voltaje")
-plt.title("Señal EMG de la flexión de bíceps")
-plt.legend()
-#plt.show()
-str = FIG_NAME + '.png'
-plt.savefig(str)
-"""
 
