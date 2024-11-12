@@ -3,16 +3,45 @@ import pandas as pd
 import matplotlib.pyplot as plt
 ADC_MAX_VALUE = 4095
 
-FIG_NAME = 'plot_ext'
-FILE = 'data_ext.csv'
+FIG_NAME = 'simulation_2_channels'
+FILE = './csv/2_channel.csv'
 
-def scaleVoltage(data, voltage=3.3):
-    data["Valor"] = (data["Valor"]/ADC_MAX_VALUE) * voltage
-    return data
+# Leer el archivo CSV
+try:
+    df = pd.read_csv(FILE)
 
-def correctTime(data):
-    data["Tiempo"] = range(1, len(data)+ 1)
-    return data
+    # Verificar las primeras filas para asegurarse de que los datos se cargaron correctamente
+    #print(df.head())
+
+    # Crear un gráfico de los dos canales de señal EMG a lo largo del tiempo
+    plt.figure(figsize=(10, 6))
+
+    # Graficar el canal flex_value
+    plt.plot(df['tiempo'], df['flex_value'], label='Canal Flex', color='b')
+
+    # Graficar el canal ext_value
+    plt.plot(df['tiempo'], df['ext_value'], label='Canal Ext', color='r')
+
+    # Agregar etiquetas y título
+    plt.xlabel('Tiempo (s)')
+    plt.ylabel('Voltaje (V)')
+    plt.title('Señales EMG de los Canales Flex y Ext')
+    plt.legend()
+
+    # Mostrar el gráfico
+    plt.grid(True)
+    str = FIG_NAME + '.png'
+    plt.savefig(str)
+    #plt.show()
+
+except FileNotFoundError:
+    print(f"Error: El archivo '{file_path}' no se encuentra en el directorio especificado.")
+except pd.errors.EmptyDataError:
+    print(f"Error: El archivo '{file_path}' está vacío.")
+except Exception as e:
+    print(f"Ocurrió un error al leer el archivo: {e}")
+
+"""
 # Ruta del archivo CSV
 file_path = FILE
 
@@ -47,7 +76,8 @@ plt.xlabel("Tiempo")
 plt.ylabel("Voltaje")
 plt.title("Señal EMG de la flexión de bíceps")
 plt.legend()
-plt.grid(True)
 #plt.show()
 str = FIG_NAME + '.png'
 plt.savefig(str)
+"""
+
