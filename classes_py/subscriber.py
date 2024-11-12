@@ -8,7 +8,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 # Clase para suscribirse a un topic en el broker MQTT
 class Subscriber:
     """
-    VARIABLES DE CLASE
+    VARIABLES DE CLASE (no hacen falta instancias de la clase para acceder a ellas)
     """
     # Configuración del usuario y contraseña del broker
     USER = "JuanPerez"
@@ -16,12 +16,13 @@ class Subscriber:
     # Configuración del broker HiveMQ y del puerto seguro
     server_mqtt = "3c8bafd418db43cca27124589b10b2d8.s1.eu.hivemq.cloud"
     puerto_mqtt = 8883
+    MAX_TIMEOUT = 30 # 30 segundos de timeout para detener lectura de mqtt si no recibe nada
 
     """
     CONSTRUCTOR DE CLASE
     """
     # Constructor con servidor, puerto, usuario y contraseña
-    def __init__(self, server, port, username, password):
+    def __init__(self, server, port, username=USER, password=PW):
         self.client = mqtt.Client()  # Cliente MQTT
         self.client.tls_set(tls_version=mqtt.ssl.PROTOCOL_TLS)  # Configurar TLS de manera explícita
         self.setUser(username, password)  # Configurar usuario y contraseña
@@ -59,7 +60,7 @@ class Subscriber:
         self.topic = topic
 
     # Verifica la conexión al broker y suscripción al topic
-    def checkTopic(self, timeout=10):
+    def checkTopic(self):
         print("Intentando conectar al broker...")
         self.client.connect(self.server, self.port)
         self.client.loop_start()
@@ -67,7 +68,7 @@ class Subscriber:
         # Espera con límite de tiempo para establecer conexión
         start_time = time.time()
         while not self.connected:
-            if time.time() - start_time > timeout:
+            if time.time() - start_time > MAX_TIMEOUT: # Tiempo de espera max para conectar al broker
                 print("Tiempo de espera agotado para la conexión.")
                 self.client.loop_stop()
                 return False
@@ -81,12 +82,13 @@ class Subscriber:
             # Espera a recibir un mensaje
             start_time = time.time()
             while self.msg is None:
-                if time.time() - start_time > 10:  # Tiempo de espera de 10 segundos para recibir mensaje
+                if time.time() - start_time > MAX_TIMEOUT:  # Tiempo de espera max. para recibir mensaje
                     print("Tiempo de espera agotado para recibir el mensaje.")
                     return None
-                time.sleep(0.1)  # Espera breve antes de verificar nuevamente
+                if self.msg is not None:
+                    time.sleep(0.1)  # Espera breve antes de verificar nuevamente
             return self.msg
-        return None  # En caso de que no haya conexión o exista el topic
+        return None  # En caso de que no haya conexión al broker o exista el topic
 """
 if __name__ == "__main__":
     topic = "/emg"

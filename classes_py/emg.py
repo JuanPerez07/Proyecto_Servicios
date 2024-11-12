@@ -30,8 +30,8 @@ class Emg:
         self.flex = 0
         self.action = Action.REPOSO # inicialmente reposo
         # variables de clase
-        FLEX_TOPIC = flex_topic
-        EXT_TOPIC = ext_topic
+        Emg.FLEX_TOPIC = flex_topic
+        Emg.EXT_TOPIC = ext_topic
     """
     SETTERS
     """
@@ -63,52 +63,67 @@ class Emg:
         return self.action
 
     """
-    METODOS DE INSTANCIA
-    """
-    def read_mqtt(self):
-        # instancia de los subscriptores a los topics de flexion y extension
-        sub_flex = Subscriber(Subscriber.server_mqtt, Subscriber.puerto_mqtt, Subscriber.USER, Subscriber.PW)
-        sub_ext = Subscriber(Subscriber.server_mqtt, Subscriber.puerto_mqtt, Subscriber.USER, Subscriber.PW)
-        
-        # establecer el topic de subscripcion
-        sub_flex.setTopic(FLEX_TOPIC)
-        sub_ext.setTopic(EXT_TOPIC)
-
-        # guardar el valor leido por los topics en los atributos
-        self.setFlex(sub_flex.getMsg())
-        self.setExt(sub_ext.getMsg())
-
-    """
     METODOS DE CLASE
     """
     @classmethod
-    def assign_action(cls, emgObj): # emgObj is an object of type Emg
+    def read_is_valid(cls, flex_value, ext_value): # comprueba que la lectura es valida
+        return flex_value is not None and flex_value > 0 and ext_value is not None and ext_value > 0
+
+    """
+    METODOS DE INSTANCIA
+    """
+    # metodo para establecer los valores leidos de los topics de /emg
+    def read_mqtt(self):
+        # instancia de los subscriptores a los topics de flexion y extension
+        sub_flex = Subscriber(Subscriber.server_mqtt, Subscriber.puerto_mqtt)
+        sub_ext = Subscriber(Subscriber.server_mqtt, Subscriber.puerto_mqtt)
+        
+        # establecer el topic de subscripcion
+        sub_flex.setTopic(Emg.FLEX_TOPIC)
+        sub_ext.setTopic(Emg.EXT_TOPIC)
+
+        # guardar el valor leido por los topics en los atributos
+        self.setFlex(sub_flex.getMsg())
+        self.setExt(sub_ext.getMsg())        
+
+    # metodo para asignar la action segun las lecturas emg de los sensores
+    def assign_action(self, read_broker=True): # bool parameter to read broker, by default True
         # read from the mqtt
-        emgObj.read_mqtt()
+        if read_broker:
+            self.read_mqtt()
         # get the instance's flexion and extension values
-        flex = emgObj.getFlex()
-        ext = emgObj.getExt()
-        threshold = emgObj.getUmbral()
-        # clasificar la accion
-        if flex < threshold and ext < threshold: # doble activacion muscular
-            emgObj.setAction(Action.COCONTRACCION)
+        flex = self.getFlex()
+        ext = self.getExt()
+        threshold = self.getUmbral()
+        # clasificar la accion si la lectura es valida (mayor que cero y diferente de None)
+        if Emg.read_is_valid(flex, ext):
+            if flex < threshold and ext < threshold: # doble activacion muscular
+                self.setAction(Action.COCONTRACCION)
         
-        elif flex < threshold and ext >= threshold:
-            emgObj.setAction(Action.FLEXION)  # Solo flexión activa
+            elif flex < threshold and ext >= threshold:
+                self.setAction(Action.FLEXION)  # Solo flexión activa
  
-        elif ext < threshold and flex >= threshold:
-            emgObj.setAction(Action.EXTENSION)  # Solo extensión activa
+            elif ext < threshold and flex >= threshold:
+                self.setAction(Action.EXTENSION)  # Solo extensión activa
         
-        else:
-            emgObj.setAction(Action.REPOSO)  # Ambas señales inactivas, reposo
+            else:
+                self.setAction(Action.REPOSO)  # Ambas señales inactivas, reposo
 
 """
 Uso
- -> inicializar objeto tipo Emg y despues leer en un while True
+ -> inicializar objeto tipo Emg con los topics a leer y despues leer en un while True
    emgObj = Emg("/emg/flex", "/emg/ext")
    while True:
-       emgObj.read_mqtt()
-       Emg.assign_action(emgObj)
+       emgObj.assign_action()
        accion = emgObj.getAction()
        # if accion == Action.COCONTRACCION then cambiar de articulacion
+
+Ejemplo sin conexion a MQTT
+# objeto tipo emg
+emgObj =  Emg("/emg/flex","/emg/ext")
+# simular data adquirida
+emgObj.setFlex(1.2) # flexion detectada 
+emgObj.setExt(1.1) # extension detectada
+emgObj.assign_action(False) # prueba sin conexion a mqtt de la logica de acciones
+print(emgObj.getAction())
 """
