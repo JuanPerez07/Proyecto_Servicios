@@ -101,13 +101,13 @@ class Emg:
                 self.setAction(Action.COCONTRACCION)
         
             elif flex < threshold and ext >= threshold:
-                self.setAction(Action.FLEXION)  # Solo flexión activa
+                self.setAction(Action.FLEXION)  # Solo flexion activa
  
             elif ext < threshold and flex >= threshold:
-                self.setAction(Action.EXTENSION)  # Solo extensión activa
+                self.setAction(Action.EXTENSION)  # Solo extension activa
         
             else:
-                self.setAction(Action.REPOSO)  # Ambas señales inactivas, reposo
+                self.setAction(Action.REPOSO)  # Ambas inactivas, reposo
 
 """
 Uso
