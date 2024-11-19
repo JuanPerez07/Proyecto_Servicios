@@ -13,23 +13,23 @@ Clase emg
 
 """
 from subscriber import Subscriber # class import
-from enum import Enum # tipo enumerado
-# clase Action -> tipo enumerado de las acciones que habra en la fsm de emgState
+from enum import Enum # enum type
+# class Action -> encode actions based on emg signals
 class Action(Enum):
     REPOSO = 1
     FLEXION = 2
     EXTENSION = 3
     COCONTRACCION = 4
-# clase Emg
+# class Emg
 class Emg:
-    # constructor a partir de los topics de flexion y extension y umbral default a 2 Voltios
+    # Constructor based on topic names and umbral default a 2 Voltios
     def __init__(self, flex_topic, ext_topic, umbral=2):
-        # variables de instancia
+        # instance variables
         self.umbral = umbral # umbral ON/OFF
-        self.ext = 0 # inicializar a valores invalidos
+        self.ext = 0
         self.flex = 0
-        self.action = Action.REPOSO # inicialmente reposo
-        # variables de clase
+        self.action = Action.REPOSO
+        # class variables
         Emg.FLEX_TOPIC = flex_topic
         Emg.EXT_TOPIC = ext_topic
     """
@@ -63,30 +63,29 @@ class Emg:
         return self.action
 
     """
-    METODOS DE CLASE
+    CLASS METHOD
     """
     @classmethod
-    def read_is_valid(cls, flex_value, ext_value): # comprueba que la lectura es valida
+    def read_is_valid(cls, flex_value, ext_value): 
         return flex_value is not None and flex_value > 0 and ext_value is not None and ext_value > 0
 
     """
-    METODOS DE INSTANCIA
+    INSTANCE METHODS
     """
-    # metodo para establecer los valores leidos de los topics de /emg
+    # set the flex and ext values read from topic /emg
     def read_mqtt(self):
-        # instancia de los subscriptores a los topics de flexion y extension
+        # instance Subscriber objects to read topics /emg/flexion and /emg/extension
         sub_flex = Subscriber(Subscriber.server_mqtt, Subscriber.puerto_mqtt)
         sub_ext = Subscriber(Subscriber.server_mqtt, Subscriber.puerto_mqtt)
         
-        # establecer el topic de subscripcion
+        # set the topic names
         sub_flex.setTopic(Emg.FLEX_TOPIC)
         sub_ext.setTopic(Emg.EXT_TOPIC)
 
-        # guardar el valor leido por los topics en los atributos
+        # save values read from the broker
         self.setFlex(sub_flex.getMsg())
         self.setExt(sub_ext.getMsg())        
 
-    # metodo para asignar la action segun las lecturas emg de los sensores
     def assign_action(self, read_broker=True): # bool parameter to read broker, by default True
         # read from the mqtt
         if read_broker:
@@ -95,7 +94,7 @@ class Emg:
         flex = self.getFlex()
         ext = self.getExt()
         threshold = self.getUmbral()
-        # clasificar la accion si la lectura es valida (mayor que cero y diferente de None)
+        # classify action if read is valid
         if Emg.read_is_valid(flex, ext):
             if flex < threshold and ext < threshold: # doble activacion muscular
                 self.setAction(Action.COCONTRACCION)
