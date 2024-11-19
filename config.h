@@ -17,8 +17,8 @@ const char* password = "mi_wifi_password";
 const char* server_mqtt = "3c8bafd418db43cca27124589b10b2d8.s1.eu.hivemq.cloud";
 const int puerto_mqtt = 8883;
 // username / password of the client (broker regulated)
-const char* mqtt_username = "JuanPerez";
-const char* mqtt_password = "servicios2025";
+const char* mqtt_username = "esp32_emg";
+const char* mqtt_password = "Servicios25";
 // root certificate to use TLS
 static const char* root_ca PROGMEM = R"EOF(
 -----BEGIN CERTIFICATE-----
