@@ -11,8 +11,8 @@ class Subscriber:
     CLASS VARIABLES
     """
     # USER, PASSWORD config
-    USER = "user1"
-    PW = "Srv2025"
+    USER = "server_1"
+    PW = "Servicios25"
     # broker HiveMQ and port
     server_mqtt = "3c8bafd418db43cca27124589b10b2d8.s1.eu.hivemq.cloud"
     puerto_mqtt = 8883
