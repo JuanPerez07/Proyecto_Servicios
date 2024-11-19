@@ -23,9 +23,9 @@ class Action(Enum):
 # class Emg
 class Emg:
     # Constructor based on topic names and umbral default a 2 Voltios
-    def __init__(self, flex_topic, ext_topic, umbral=2):
+    def __init__(self, flex_topic, ext_topic, umbral=2.0):
         # instance variables
-        self.umbral = umbral # umbral ON/OFF
+        self.umbral = float(umbral) # umbral ON/OFF
         self.ext = 0
         self.flex = 0
         self.action = Action.REPOSO
@@ -36,10 +36,10 @@ class Emg:
     SETTERS
     """
     def setFlex(self, flex):
-        self.flex = flex
+        self.flex = float(flex)
 
     def setExt(self, ext):
-        self.ext = ext
+        self.ext = float(ext)
     
     def setUmbral(self, umbral):
         self.umbral = umbral
