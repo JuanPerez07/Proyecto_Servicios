@@ -11,84 +11,82 @@ class Subscriber:
     CLASS VARIABLES
     """
     # USER, PASSWORD config
-    USER = "JuanPerez"
-    PW = "servicios2025"
+    USER = "user1"
+    PW = "Srv2025"
     # broker HiveMQ and port
     server_mqtt = "3c8bafd418db43cca27124589b10b2d8.s1.eu.hivemq.cloud"
     puerto_mqtt = 8883
     MAX_TIMEOUT = 30 # 30 secs de timeout to stop reading from broker
 
     """
-    CONSTRUCTOR DE CLASE
+    CLASS CONSTRUCTOR
     """
-    # Constructor con servidor, puerto, usuario y contraseña
+    # Constructor using server, port, username, pw
     def __init__(self, server, port, username=USER, password=PW):
-        self.client = mqtt.Client()  # Cliente MQTT
-        self.client.tls_set(tls_version=mqtt.ssl.PROTOCOL_TLS)  # Configurar TLS de manera explícita
-        self.setUser(username, password)  # Configurar usuario y contraseña
+        self.client = mqtt.Client()  # Client MQTT
+        self.client.tls_set(tls_version=mqtt.ssl.PROTOCOL_TLS)  # Configure TLS
+        self.setUser(username, password) 
         self.server = server
         self.port = port
         self.topic = ""
-        self.connected = False  # Estado de conexión
-        self.msg = None  # Último mensaje recibido
-        self.client.on_connect = self._on_connect  # Callback para manejar conexión
-        self.client.on_message = self._on_message  # Callback para manejar mensajes
+        self.connected = False  # connection state
+        self.msg = None  # last msg received
+        self.client.on_connect = self._on_connect  # connection callback
+        self.client.on_message = self._on_message  # msg callback
 
     """
-    METODOS DE INSTANCIA Y CALLBACKS
+    INSTANCE METHODS & CALLBACKS
     """
-    # Método interno para manejar la conexión
+    # connection callback
     def _on_connect(self, _, __, ___, rc):
         if rc == 0:
-            print("Conexión al broker MQTT exitosa")
+            print("Conexion al broker MQTT exitosa")
             self.client.subscribe(self.topic)
             self.connected = True
         else:
-            print("Error en la conexión, código de error:", rc)
+            print("Error en la conexion, codigo de error:", rc)
             self.connected = False
 
-    # Método interno para manejar mensajes
+    # message callback
     def _on_message(self, _, __, msg):
         self.msg = msg.payload.decode()
 
-    # Configura el usuario y contraseña
     def setUser(self, user, pw):
         self.client.username_pw_set(user, pw)
      
-    # Configura el topic
+    # set the topic string to subscribe from
     def setTopic(self, topic):
         self.topic = topic
 
-    # Verifica la conexión al broker y suscripción al topic
+    # verify broker connection
     def checkTopic(self):
         print("Intentando conectar al broker...")
         self.client.connect(self.server, self.port)
         self.client.loop_start()
         
-        # Espera con límite de tiempo para establecer conexión
+        # wait using a MAX_TIMEOUT
         start_time = time.time()
         while not self.connected:
-            if time.time() - start_time > MAX_TIMEOUT: # Tiempo de espera max para conectar al broker
-                print("Tiempo de espera agotado para la conexión.")
+            if time.time() - start_time > MAX_TIMEOUT:
+                print("Tiempo de espera agotado para la conexion.")
                 self.client.loop_stop()
                 return False
             time.sleep(0.1)  # Espera breve antes de verificar nuevamente
         
         return self.connected
 
-    # Obtiene el mensaje del topic
+    # get the topic message
     def getMsg(self):
-        if self.checkTopic():  # Verifica conexión y suscripción al topic 
-            # Espera a recibir un mensaje
+        if self.checkTopic():   
             start_time = time.time()
             while self.msg is None:
-                if time.time() - start_time > MAX_TIMEOUT:  # Tiempo de espera max. para recibir mensaje
+                if time.time() - start_time > MAX_TIMEOUT:  
                     print("Tiempo de espera agotado para recibir el mensaje.")
                     return None
                 if self.msg is not None:
                     time.sleep(0.1)  # Espera breve antes de verificar nuevamente
             return self.msg
-        return None  # En caso de que no haya conexión al broker o exista el topic
+        return None  # cannot connect to broker or simply topic does not exist
 """
 if __name__ == "__main__":
     topic = "/emg"
