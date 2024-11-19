@@ -67,7 +67,7 @@ class Subscriber:
         # wait using a MAX_TIMEOUT
         start_time = time.time()
         while not self.connected:
-            if time.time() - start_time > MAX_TIMEOUT:
+            if time.time() - start_time > self.MAX_TIMEOUT:
                 print("Tiempo de espera agotado para la conexion.")
                 self.client.loop_stop()
                 return False
@@ -80,7 +80,7 @@ class Subscriber:
         if self.checkTopic():   
             start_time = time.time()
             while self.msg is None:
-                if time.time() - start_time > MAX_TIMEOUT:  
+                if time.time() - start_time > self.MAX_TIMEOUT:  
                     print("Tiempo de espera agotado para recibir el mensaje.")
                     return None
                 if self.msg is not None:
