@@ -5,18 +5,18 @@ import time
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 
-# Clase para suscribirse a un topic en el broker MQTT
+# Class to subscribe to the broker HiveMQ
 class Subscriber:
     """
-    VARIABLES DE CLASE (no hacen falta instancias de la clase para acceder a ellas)
+    CLASS VARIABLES
     """
-    # Configuración del usuario y contraseña del broker
+    # USER, PASSWORD config
     USER = "JuanPerez"
     PW = "servicios2025"
-    # Configuración del broker HiveMQ y del puerto seguro
+    # broker HiveMQ and port
     server_mqtt = "3c8bafd418db43cca27124589b10b2d8.s1.eu.hivemq.cloud"
     puerto_mqtt = 8883
-    MAX_TIMEOUT = 30 # 30 segundos de timeout para detener lectura de mqtt si no recibe nada
+    MAX_TIMEOUT = 30 # 30 secs de timeout to stop reading from broker
 
     """
     CONSTRUCTOR DE CLASE
