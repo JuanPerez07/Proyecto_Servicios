@@ -109,7 +109,7 @@ public:
 IMUHandler imuHandler;
 
 // WiFi y MQTT
-WiFiClient espClient;
+WiFiClientSecure espClient; // NO puede ser WiFiClient
 PubSubClient client(espClient);
 
 // Función para configurar la conexión WiFi
