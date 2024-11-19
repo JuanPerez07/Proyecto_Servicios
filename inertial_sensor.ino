@@ -1,124 +1,144 @@
-/*
-This sketch combines magnetometer readings from an LIS3MDL and accelerometer
-readings from an LSM6 to calculate a tilt-compensated magnetic heading. It
-requires Pololu's LSM6 Arduino library to be installed:
+//Pines del sensor
+//gnd -> gnd
+//SCL -> g22
+//SDA -> g21
+//vin -> 3.3v
 
-https://github.com/pololu/lsm6-arduino
-
-This program can be used with a board that includes both sensors, like the
-Pololu MinIMU-9 v5 and AltIMU-10 v5, or with separate carrier boards for the two
-sensors, both connected to the same I2C bus. If you are using separate boards,
-make sure the axes are oriented the same way on both (i.e. the X, Y, and Z axes
-of both boards should point in the same direction, and the surfaces of the
-boards should be as close to parallel as possible).
-*/
+//quitar ek yaw de la implementacion.
 
 #include <Wire.h>
 #include <LIS3MDL.h>
 #include <LSM6.h>
 
-LIS3MDL mag;
-LSM6 imu;
+class IMUSensor {
+private:
+  LIS3MDL mag;    // Magnetómetro
+  LSM6 imu;       // Acelerómetro y Giroscopio
 
-/*
-Calibration values; the default values of +/-32767 for each axis
-lead to an assumed magnetometer bias of 0. Use the Calibrate example
-program to determine appropriate values for your particular unit.
-*/
-LIS3MDL::vector<int16_t> m_min = {-32767, -32767, -32767};
-LIS3MDL::vector<int16_t> m_max = {+32767, +32767, +32767};
+  // Variables para los ángulos
+  float accel_ang_x = 0.0;
+  float accel_ang_y = 0.0;
+  float girosc_ang_x = 0.0;
+  float girosc_ang_y = 0.0;
 
-void setup()
-{
-  Serial.begin(9600);
-  Wire.begin();
+  float ang_x = 0.0, ang_y = 0.0;
+  float ang_x_prev = 0.0, ang_y_prev = 0.0;
 
-  if (!mag.init())
-  {
-    Serial.println("Failed to detect and initialize LIS3MDL magnetometer!");
-    while (1);
+  unsigned long tiempo_prev;
+
+  // Offsets para roll y pitch
+  float roll_offset = 0.0;
+  float pitch_offset = 0.0;
+
+  // Indica si los offsets iniciales ya fueron calculados
+  bool offsets_calculados = false;
+
+  // GPIO del botón
+  const int buttonPin = 23;
+
+public:
+  // Método para inicializar los sensores y configurar el botón
+  void init() {
+    Serial.begin(115200);
+    Wire.begin();
+
+    // Configurar pin del botón como entrada con pull-up
+    pinMode(buttonPin, INPUT_PULLUP);
+
+    // Inicializar el magnetómetro
+    if (!mag.init()) {
+      Serial.println("No se detectó el magnetómetro LIS3MDL");
+      while (1);
+    }
+    mag.enableDefault();
+
+    // Inicializar el acelerómetro y giroscopio
+    if (!imu.init()) {
+      Serial.println("No se detectó el IMU LSM6");
+      while (1);
+    }
+    imu.enableDefault();
+
+    // Inicializar tiempo para integración del giroscopio
+    tiempo_prev = millis();
   }
-  mag.enableDefault();
 
-  if (!imu.init())
-  {
-    Serial.println("Failed to detect and initialize LSM6 IMU!");
-    while (1);
+  // Método para actualizar y calcular los ángulos
+  void update() {
+    // Leer datos del acelerómetro y giroscopio
+    imu.read();
+
+    // Calcular el delta de tiempo
+    unsigned long currentTime = millis();
+    float dt = (currentTime - tiempo_prev) / 1000.0; // delta de tiempo en segundos
+    tiempo_prev = currentTime;
+
+    // Calcular ángulo de roll y pitch usando el acelerómetro
+    accel_ang_x = atan2(imu.a.y, imu.a.z) * (180.0 / PI); // Roll
+    accel_ang_y = atan2(-imu.a.x, sqrt(imu.a.y * imu.a.y + imu.a.z * imu.a.z)) * (180.0 / PI); // Pitch
+
+    // Integrar velocidades angulares del giroscopio para obtener ángulos (Roll y Pitch)
+    girosc_ang_x += (imu.g.x * dt) / 131.0;  // Roll (en grados)
+    girosc_ang_y += (imu.g.y * dt) / 131.0;  // Pitch (en grados)
+
+    // Aplicar el filtro complementario
+    ang_x = 0.98 * (ang_x_prev + (imu.g.x / 131.0) * dt) + 0.02 * accel_ang_x; // Roll
+    ang_y = 0.98 * (ang_y_prev + (imu.g.y / 131.0) * dt) + 0.02 * accel_ang_y; // Pitch
+
+    // Actualizar valores previos
+    ang_x_prev = ang_x;
+    ang_y_prev = ang_y;
+
+    // Calcular offsets iniciales para establecer como referencia el punto de inicio
+    if (!offsets_calculados) {
+      roll_offset = ang_x;
+      pitch_offset = ang_y;
+      offsets_calculados = true;
+    }
+
+    // Ajustar roll y pitch para mantenerlos en el rango de -180 a 180
+    ang_x -= roll_offset;
+    ang_y -= pitch_offset;
+
+    if (ang_x > 180) ang_x -= 360;
+    if (ang_x < -180) ang_x += 360;
+    if (ang_y > 180) ang_y -= 360;
+    if (ang_y < -180) ang_y += 360;
   }
-  imu.enableDefault();
+
+  // Método para imprimir los valores de los ángulos y el estado del botón
+  void printAnglesAndButton() {
+    static unsigned long lastPrintTime = 0;
+    bool buttonPressed = digitalRead(buttonPin);
+
+    // Imprimir los ángulos en el monitor serial cada 500 ms
+    if (millis() - lastPrintTime >= 500) {
+      lastPrintTime = millis();
+
+      // Leer el estado del botón (inverso porque está en pull-up)
+
+      // Redondear ángulos a múltiplos de 10
+      int ang_x_rounded = round(ang_x / 10) * 10;
+      int ang_y_rounded = round(ang_y / 10) * 10;
+
+      Serial.print("Roll: ");
+      Serial.print(ang_x_rounded);
+      Serial.print("°, Pitch: ");
+      Serial.print(ang_y_rounded);
+      Serial.print("°, Button: ");
+      Serial.println(!buttonPressed ? "Pressed" : "Not Pressed");
+    }
+  }
+};
+
+// Instancia de la clase
+IMUSensor imuSensor;
+
+void setup() {
+  imuSensor.init(); // Inicializar el sensor y el botón
 }
 
-void loop()
-{
-  mag.read();
-  imu.read();
-
-  /*
-  When given no arguments, the heading() function returns the angular
-  difference in the horizontal plane between a default vector (the
-  +X axis) and north, in degrees.
-  */
-  float heading = computeHeading();
-
-  /*
-  To use a different vector as a reference, use the version of
-  computeHeading() that takes a vector argument; for example, call it like this
-  to use the -Z axis as a reference:
-  */
-  //float heading = computeHeading((LIS3MDL::vector<int>){0, 0, -1});
-  int aux = heading;
-  int  aux_resto =  aux % 10;
-  aux = aux - aux_resto;
-
-  Serial.println(aux);
-  delay(200);
-  
-}
-
-/*
-Returns the angular difference in the horizontal plane between the
-"from" vector and north, in degrees.
-
-Description of heading algorithm:
-Shift and scale the magnetic reading based on calibration data to find
-the North vector. Use the acceleration readings to determine the Up
-vector (gravity is measured as an upward acceleration). The cross
-product of North and Up vectors is East. The vectors East and North
-form a basis for the horizontal plane. The From vector is projected
-into the horizontal plane and the angle between the projected vector
-and horizontal north is returned.
-*/
-template <typename T> float computeHeading(LIS3MDL::vector<T> from)
-{
-  LIS3MDL::vector<int32_t> temp_m = {mag.m.x, mag.m.y, mag.m.z};
-
-  // copy acceleration readings from LSM6::vector into an LIS3MDL::vector
-  LIS3MDL::vector<int16_t> a = {imu.a.x, imu.a.y, imu.a.z};
-
-  // subtract offset (average of min and max) from magnetometer readings
-  temp_m.x -= ((int32_t)m_min.x + m_max.x) / 2;
-  temp_m.y -= ((int32_t)m_min.y + m_max.y) / 2;
-  temp_m.z -= ((int32_t)m_min.z + m_max.z) / 2;
-
-  // compute E and N
-  LIS3MDL::vector<float> E;
-  LIS3MDL::vector<float> N;
-  LIS3MDL::vector_cross(&temp_m, &a, &E);
-  LIS3MDL::vector_normalize(&E);
-  LIS3MDL::vector_cross(&a, &E, &N);
-  LIS3MDL::vector_normalize(&N);
-
-  // compute heading
-  float heading = atan2(LIS3MDL::vector_dot(&E, &from), LIS3MDL::vector_dot(&N, &from)) * 180 / PI;
-  if (heading < 0) heading += 360;
-  return heading;
-}
-
-/*
-Returns the angular difference in the horizontal plane between a
-default vector (the +X axis) and north, in degrees.
-*/
-float computeHeading()
-{
-  return computeHeading((LIS3MDL::vector<int>){0, 0, 1});
+void loop() {
+  imuSensor.update();             // Actualizar los cálculos
+  imuSensor.printAnglesAndButton(); // Imprimir ángulos y estado del botón
 }
