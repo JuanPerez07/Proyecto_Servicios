@@ -111,7 +111,9 @@ IMUHandler imuHandler;
 // WiFi y MQTT
 WiFiClientSecure espClient; // ERROR CORREGIDO: NO puede ser WiFiClient
 PubSubClient client(espClient);
-
+// data used in the callback from mqtt 
+String _topic;
+String _payload;
 // Función para configurar la conexión WiFi
 void setupWiFi() {
     delay(10);
