@@ -109,7 +109,7 @@ public:
 IMUHandler imuHandler;
 
 // WiFi y MQTT
-WiFiClientSecure espClient; // NO puede ser WiFiClient
+WiFiClientSecure espClient; // ERROR CORREGIDO: NO puede ser WiFiClient
 PubSubClient client(espClient);
 
 // Función para configurar la conexión WiFi
@@ -136,7 +136,15 @@ void connectMQTT() {
         }
     }
 }
-
+// callback para manejar el msg.payload del mqtt 
+void callback(char* topic, byte* payload, unsigned int length){
+  String conc_payload_;
+  for (int i=0;i<length;i++){
+    conc_payload_ +=(char)payload[i];
+  }
+  _topic=topic;
+  _payload=conc_payload_;
+}
 // Publicar datos a la nube
 void publishData(int rollState, int pitchState, bool buttonPressed) {
     client.publish("/imu/j1", String(rollState).c_str());
@@ -153,11 +161,11 @@ void publishData(int rollState, int pitchState, bool buttonPressed) {
 
 void setup() {
     Serial.begin(115200);
-
+    espClient.setCACert(root_ca);  // ERROR CORREGIDO: Set the root certificate
     // Configurar WiFi y MQTT
     setupWiFi();
     client.setServer(server_mqtt, puerto_mqtt);
-
+    client.setCallback(callback); // ERROR CORREGIDO: Se necesita un callback para enviar el msg.payload asociado a un topic
     // Inicializar sensores y botón
     imuHandler.init();
     pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -180,7 +188,7 @@ void loop() {
     if (millis() - lastPublishTime >= PUBLISH_INTERVAL) {
         lastPublishTime = millis();
 
-        int rollState = imuHandler.getRollState();
+        int rollState = imuHandler.getRollState(); // Las variables a enviar al broker las haría tipo "static"
         int pitchState = imuHandler.getPitchState();
 
         publishData(rollState, pitchState, buttonPressed);
