@@ -68,10 +68,10 @@ class Subscriber:
         start_time = time.time()
         while not self.connected:
             if time.time() - start_time > self.MAX_TIMEOUT:
-                print("Tiempo de espera agotado para la conexion.")
+                #print("Tiempo de espera agotado para la conexion.")
                 self.client.loop_stop()
                 return False
-            time.sleep(0.1)  # Espera breve antes de verificar nuevamente
+            time.sleep(0.01)  # Espera breve antes de verificar nuevamente
         
         return self.connected
 
@@ -84,7 +84,7 @@ class Subscriber:
                     #print("Tiempo de espera agotado para recibir el mensaje.")
                     return 0
                 if self.msg is not None:
-                    time.sleep(0.1)  # Espera breve antes de verificar nuevamente
+                    time.sleep(0.01)  # Espera breve antes de verificar nuevamente
             return self.msg
         return 0  # cannot connect to broker or simply topic does not exist
 """
