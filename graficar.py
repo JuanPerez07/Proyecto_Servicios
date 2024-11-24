@@ -1,5 +1,6 @@
 # Importar las bibliotecas necesarias
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 ADC_MAX_VALUE = 4095
 
@@ -34,8 +35,13 @@ try:
     # Mostrar leyenda en la esquina inferior derecha, con tamaño reducido y cuadro pequeño
     plt.legend(loc='lower left', fontsize=6, frameon=True, borderpad=1, borderaxespad=0.5)
 
+    # Establecer los valores del eje X para mostrar cada 10 unidades
+    xticks_values = np.arange(0, 301, 20)  # De 0 a 100, con paso de 10
+    plt.xticks(xticks_values)  # Cambiar las posiciones de las etiquetas del eje X
+    
     # Mostrar el gráfico
-    plt.grid(True)
+    plt.grid(axis='y', linestyle='--', color='gray')
+    plt.grid(axis='x', linestyle='--', color='green')
     str = FIG_NAME + '.png'
     plt.savefig(str)
     #plt.show()

@@ -98,6 +98,7 @@ if __name__ == "__main__":
         ext = row["ext_value"]
         time.sleep(0.1)
     """
+    freq = 4 # Hz
     # Crear un objeto Publisher y conectarse al broker
     pub = Publisher(Publisher.server_mqtt, Publisher.puerto_mqtt, "esp32_emg", "Servicios25")
     if pub.connect():
@@ -106,7 +107,7 @@ if __name__ == "__main__":
             pub.publish("/timestamp", row["tiempo"])
             pub.publish("/emg/flexion", row["flex_value"])
             pub.publish("/emg/extension", row["ext_value"])
-            time.sleep(1)  # Pausa de 1 segundo entre mensajes
+            time.sleep(1/freq)  # Pausa de 1 segundo entre mensajes
         # Desconectar al finalizar
         pub.disconnect()
 
