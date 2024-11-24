@@ -1,0 +1,165 @@
+#! /usr/bin/env python
+# ROS Distro: Kinetic
+
+import sys
+import copy
+import rospy
+import moveit_commander
+import moveit_msgs.msg
+import geometry_msgs.msg
+from math import pi
+from std_msgs.msg import String
+from moveit_commander.conversions import pose_to_list
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from emg import *
+
+def all_close(goal, actual, tolerance):
+	
+	all_equal = True
+	if type(goal) is list:
+		for index in range(len(goal)):
+			if abs(actual[index] - goal[index]) > tolerance:
+				return False
+
+	elif type(goal) is geometry_msgs.msg.PoseStamped:
+		return all_close(goal.pose, actual.pose, tolerance)
+
+	elif type(goal) is geometry_msgs.msg.Pose:
+		return all_close(pose_to_list(goal), pose_to_list(actual), tolerance)
+
+	return True
+
+
+class ABB_IRB120(object):
+
+	def __init__(self):
+		super(ABB_IRB120, self).__init__()
+
+		## Inicializamos moveit_commander y el nodo rospy:
+		moveit_commander.roscpp_initialize(sys.argv)
+		rospy.init_node('moving_irb120_robot', anonymous=True)
+		
+		## Creamos el objeto 'RobotCommander':
+		robot = moveit_commander.RobotCommander()
+
+		## Creamos el objeto 'PlanningSceneInterface':
+		scene = moveit_commander.PlanningSceneInterface()
+
+		## Instanciamos uno o varios objetos 'MoveGroupCommander', los
+		## cuales son interfaces para un grupo de planificacion (grupo
+		## de articulaciones).
+		## Esta interfaz puede utilizarse para planificar y ejecutar
+		## movimientos:
+		arm_group = moveit_commander.MoveGroupCommander("manipulator")
+
+		## Creamos el DisplayTrajectory ROS publisher para visualizar trayectorias en RViz:
+		display_trajectory_publisher = rospy.Publisher('/arm_group/display_planned_path', moveit_msgs.msg.DisplayTrajectory, queue_size=20)
+
+		## Recopilar informacion basica
+		## ^^^^^^^^^^^^^^^^^^^^^^^^^
+		# Nombre del marco de referencia para este robot:
+		planning_frame = arm_group.get_planning_frame()
+
+		# Nombre del eslabon del efector final para este grupo:
+		eef_link = arm_group.get_end_effector_link()
+
+		# Lista con los grupos del robot:
+		group_names = robot.get_group_names()
+
+		# Variables
+		self.robot = robot #Robot
+		self.scene = scene #Escena
+		self.arm_group = arm_group #Grupo del brazo robotico
+		self.display_trajectory_publisher = display_trajectory_publisher
+		self.planning_frame = planning_frame
+		self.eef_link = eef_link #Link del efector final
+		self.group_names = group_names #Grupos del robot
+
+	# Forward Kinematics (FK): Para mover el brazo robotico segun los
+	# valores de las articulaciones
+	def move_joint_arm(self, joint_goal):
+		arm_group = self.arm_group
+		# Al comando go se le pasan los nuevos valores para cada
+		# articulacion
+		arm_group.go(joint_goal, wait=True)
+		# Para garantizar la ausencia de movimientos residuales
+		arm_group.stop()
+		# Comprobamos los nuevos valores de las articulaciones:
+		current_joints = arm_group.get_current_joint_values()
+		return all_close(joint_goal, current_joints, 0.01)
+
+	# Para mover el robot a una posicion previamente establecida
+	# En nuestro caso, podemos utilizar "home" o "all-zeros"
+	def go_to_target(self, target="home", group_name = "manipulator"):
+		arm_group = moveit_commander.MoveGroupCommander(group_name)
+		arm_group.set_named_target(target)
+		plan = arm_group.go(wait=True)
+		arm_group.stop()
+		clear_joint_value_targets()
+		arm_group.clear_pose_targets()
+		return 1
+
+def speed_control(ABB, indice, sentido, velocidad=0.12):
+	joint = ABB.arm_group.get_current_joint_values()
+	joint[indice] = joint[indice] + velocidad*sentido
+	
+	ABB.move_joint_arm(joint)
+	
+	rospy.sleep(0.25)
+
+def move_home(ABB):
+	print ("Moving pose HOME")
+	joint = ABB.arm_group.get_current_joint_values()
+	joint[0] = 0
+	joint[1] = 0
+	joint[2] = 0
+	joint[3] = 0
+	joint[4] = 0
+	joint[5] = 0
+	ABB.move_joint_arm(joint)
+	return	
+		
+# Funcion principal
+def main():
+	print ("Setting up the moveit_commander")
+	ABB = ABB_IRB120()
+		
+	print ("Press Enter to execute")
+	move_home(ABB)
+	raw_input()
+	indice = 1
+	isOk = True
+	sentido = 0
+	while not rospy.is_shutdown():
+		try:
+			while isOk or not rospy.is_shutdown():
+				emgObj = Emg("/emg/flexion", "/emg/extension")
+
+				isOk = emgObj.assign_action() # false pq no hay mqtt conectado
+				# accion detectada
+				accion = emgObj.getAction()
+				print("Accion actual: ", accion)
+				print("Articulacion a controlar: ", indice)
+				if accion == Action.COCONTRACCION:
+					indice += 1
+					if indice == 4:
+						isOk = False
+				elif accion == Action.FLEXION:
+					sentido = 1
+				elif accion == Action.EXTENSION:
+					sentido = -1
+				else:
+					sentido = 0
+				#enviar al robot que mueva en un sentido la articulacion i
+				speed_control(ABB, indice, sentido)
+
+			move_home(ABB)
+		except rospy.ROSInterruptException:
+			move_home(ABB)
+			return
+		except KeyboardInterrupt:
+			return
+
+
+if __name__ == '__main__':
+	main()
