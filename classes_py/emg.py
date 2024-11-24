@@ -109,9 +109,8 @@ class Emg:
                 self.setAction(Action.REPOSO)  # Ambas inactivas, reposo
             
             return True
-        
-        else:
-            return False  
+		
+        return False  
 
 """
 Uso
