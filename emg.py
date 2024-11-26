@@ -107,11 +107,10 @@ class Emg:
         
             else:
                 self.setAction(Action.REPOSO)  # Ambas inactivas, reposo
-    
             
             return True
-
-        return False
+		
+        return False  
 
 """
 Uso
@@ -122,12 +121,14 @@ Uso
        accion = emgObj.getAction()
        # if accion == Action.COCONTRACCION then cambiar de articulacion
 
-Ejemplo sin conexion a MQTT
+#Ejemplo sin conexion a MQTT
 # objeto tipo emg
-emgObj =  Emg("/emg/flex","/emg/ext")
+emgObj =  Emg("/emg/flexion","/emg/extension")
+isOk = True
+while isOk:
 # simular data adquirida
-emgObj.setFlex(1.2) # flexion detectada 
-emgObj.setExt(1.1) # extension detectada
-emgObj.assign_action(False) # prueba sin conexion a mqtt de la logica de acciones
-print(emgObj.getAction())
+#emgObj.setFlex(1.2) # flexion detectada 
+#emgObj.setExt(1.1) # extension detectada
+    isOk = emgObj.assign_action() # prueba sin conexion a mqtt de la logica de acciones
+    print(emgObj.getAction())
 """

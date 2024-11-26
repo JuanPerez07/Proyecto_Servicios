@@ -13,6 +13,9 @@ from moveit_commander.conversions import pose_to_list
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from emg import *
 
+# frecuencia lectura sensores del ABB
+FREQ =  2 # Hz
+
 def all_close(goal, actual, tolerance):
 	
 	all_equal = True
@@ -74,6 +77,7 @@ class ABB_IRB120(object):
 		self.planning_frame = planning_frame
 		self.eef_link = eef_link #Link del efector final
 		self.group_names = group_names #Grupos del robot
+		self.freq = FREQ
 
 	# Forward Kinematics (FK): Para mover el brazo robotico segun los
 	# valores de las articulaciones
@@ -105,19 +109,26 @@ def speed_control(ABB, indice, sentido, velocidad=0.12):
 	
 	ABB.move_joint_arm(joint)
 	
-	rospy.sleep(0.25)
+	rospy.sleep(1/ABB.freq)
 
 def move_home(ABB):
-	print ("Moving pose HOME")
 	joint = ABB.arm_group.get_current_joint_values()
-	joint[0] = 0
-	joint[1] = 0
-	joint[2] = 0
-	joint[3] = 0
-	joint[4] = 0
-	joint[5] = 0
-	ABB.move_joint_arm(joint)
-	return	
+
+	if all(pos == 0 for pos in joint):
+		print("The arm is already in the HOME position. No movement needed.")
+		return
+	else:
+
+		print ("Moving pose HOME")	
+		joint[0] = 0
+		joint[1] = 0
+		joint[2] = 0
+		joint[3] = 0
+		joint[4] = 0
+		joint[5] = 0
+		ABB.move_joint_arm(joint)
+
+		return	
 		
 # Funcion principal
 def main():
@@ -125,13 +136,14 @@ def main():
 	ABB = ABB_IRB120()
 		
 	print ("Press Enter to execute")
-	move_home(ABB)
 	raw_input()
-	indice = 1
+	move_home(ABB)
+	indice = 0
 	isOk = True
 	sentido = 0
 	while not rospy.is_shutdown():
 		try:
+			print("Conectandose al MQTT")
 			while isOk or not rospy.is_shutdown():
 				emgObj = Emg("/emg/flexion", "/emg/extension")
 

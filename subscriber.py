@@ -16,7 +16,7 @@ class Subscriber:
     # broker HiveMQ and port
     server_mqtt = "3c8bafd418db43cca27124589b10b2d8.s1.eu.hivemq.cloud"
     puerto_mqtt = 8883
-    MAX_TIMEOUT = 30 # 30 secs de timeout to stop reading from broker
+    MAX_TIMEOUT = 10 # secs de timeout to stop reading from broker
 
     """
     CLASS CONSTRUCTOR
@@ -40,7 +40,7 @@ class Subscriber:
     # connection callback
     def _on_connect(self, _, __, ___, rc):
         if rc == 0:
-            print("Conexion al broker MQTT exitosa")
+            #print("Conexion al broker MQTT exitosa")
             self.client.subscribe(self.topic)
             self.connected = True
         else:
@@ -60,7 +60,7 @@ class Subscriber:
 
     # verify broker connection
     def checkTopic(self):
-        print("Intentando conectar al broker...")
+        #print("Intentando conectar al broker...")
         self.client.connect(self.server, self.port)
         self.client.loop_start()
         
@@ -68,10 +68,10 @@ class Subscriber:
         start_time = time.time()
         while not self.connected:
             if time.time() - start_time > self.MAX_TIMEOUT:
-                print("Tiempo de espera agotado para la conexion.")
+                #print("Tiempo de espera agotado para la conexion.")
                 self.client.loop_stop()
                 return False
-            time.sleep(0.1)  # Espera breve antes de verificar nuevamente
+            time.sleep(0.01)  # Espera breve antes de verificar nuevamente
         
         return self.connected
 
@@ -81,12 +81,12 @@ class Subscriber:
             start_time = time.time()
             while self.msg is None:
                 if time.time() - start_time > self.MAX_TIMEOUT:  
-                    print("Tiempo de espera agotado para recibir el mensaje.")
-                    return None
+                    #print("Tiempo de espera agotado para recibir el mensaje.")
+                    return 0
                 if self.msg is not None:
-                    time.sleep(0.1)  # Espera breve antes de verificar nuevamente
+                    time.sleep(0.01)  # Espera breve antes de verificar nuevamente
             return self.msg
-        return None  # cannot connect to broker or simply topic does not exist
+        return 0  # cannot connect to broker or simply topic does not exist
 """
 if __name__ == "__main__":
     topic = "/emg"
