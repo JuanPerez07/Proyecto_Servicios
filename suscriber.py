@@ -17,8 +17,6 @@ MAX_TIMEOUT = 30 # 30 segundos de timeout para detener lectura de mqtt si no rec
 
 # Clase para suscribirse a un topic en el broker MQTT
 class Subscriber:
-
-
     """
     CONSTRUCTOR DE CLASE
     """
@@ -103,6 +101,5 @@ if __name__ == "__main__":
         msg2 = sub2.getMsg()
         print(f"Motor j1: {msg} ; Motor j2: {msg2}")
         if msg is None:
-        
-'''
             break
+'''
