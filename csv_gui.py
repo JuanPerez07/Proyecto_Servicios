@@ -1,3 +1,6 @@
+"""
+interfaz de la parte de EMG
+"""
 import tkinter as tk
 from tkinter import filedialog, messagebox
 import pandas as pd
