@@ -15,7 +15,7 @@ Clase emg
 from subscriber import Subscriber # class import
 from enum import Enum # enum type
 # class Action -> encode actions based on emg signals
-class Action(Enum):
+class EmgAction(Enum):
     REPOSO = 1
     FLEXION = 2
     EXTENSION = 3
@@ -28,7 +28,7 @@ class Emg:
         self.umbral = float(umbral) # umbral ON/OFF
         self.ext = 0
         self.flex = 0
-        self.action = Action.REPOSO
+        self.action = EmgAction.REPOSO
         # class variables
         Emg.FLEX_TOPIC = flex_topic
         Emg.EXT_TOPIC = ext_topic
@@ -97,16 +97,16 @@ class Emg:
         # classify action if read is valid
         if Emg.read_is_valid(flex, ext):
             if flex < threshold and ext < threshold: # doble activacion muscular
-                self.setAction(Action.COCONTRACCION)
+                self.setAction(EmgAction.COCONTRACCION)
         
             elif flex < threshold and ext >= threshold:
-                self.setAction(Action.FLEXION)  # Solo flexion activa
+                self.setAction(EmgAction.FLEXION)  # Solo flexion activa
  
             elif ext < threshold and flex >= threshold:
-                self.setAction(Action.EXTENSION)  # Solo extension activa
+                self.setAction(EmgAction.EXTENSION)  # Solo extension activa
         
             else:
-                self.setAction(Action.REPOSO)  # Ambas inactivas, reposo
+                self.setAction(EmgAction.REPOSO)  # Ambas inactivas, reposo
             
             return True
 		
@@ -119,7 +119,7 @@ Uso
    while True:
        emgObj.assign_action()
        accion = emgObj.getAction()
-       # if accion == Action.COCONTRACCION then cambiar de articulacion
+       # if accion == EmgAction.COCONTRACCION then cambiar de articulacion
 
 #Ejemplo sin conexion a MQTT
 # objeto tipo emg
