@@ -55,10 +55,10 @@ class IMU:
     def getJ5(self):
         return self.j5
     
-    def getActionJ4(self):
+    def getJ4Action(self):
         return self.action_j4
     
-    def getActionJ5(self):
+    def getJ5Action(self):
         return self.action_j5
     
     """
