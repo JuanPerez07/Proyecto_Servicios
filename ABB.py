@@ -11,8 +11,10 @@ from math import pi
 from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
-from emg import *
-from imu import *
+# import classes 
+from classes_py.emg import *
+from classes_py.imu import *
+from gui import RobotInterface 
 
 # frecuencia lectura sensores del ABB
 FREQ =  2 # Hz

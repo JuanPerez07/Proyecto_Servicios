@@ -12,7 +12,8 @@ Clase emg
            - setUmbral (establece el umbral de las acciones on/off)
 
 """
-from subscriber import Subscriber # class import
+from classes_py.subscriber import Subscriber
+#from subscriber import Subscriber # class import
 from enum import Enum # enum type
 # class Action -> encode actions based on emg signals
 class EmgAction(Enum):

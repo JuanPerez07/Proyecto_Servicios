@@ -9,7 +9,8 @@ Clase IMU
         - getStatus(devuelve la accion leida de los topics del sensor)
 
 """
-from subscriber import Subscriber # class import
+#from subscriber import Subscriber # class import
+from classes_py.subscriber import Subscriber
 from enum import Enum # enum type
 # class Action -> encode actions based on IMUsignals
 class Imu_action(Enum):

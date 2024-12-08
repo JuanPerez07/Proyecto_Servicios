@@ -5,16 +5,19 @@ import tkinter as tk
 import threading
 import time
 import random
+import os
 import numpy as np
 from tkinter import Canvas
 from PIL import Image, ImageTk
 
-from emg import *
-from imu import *
+from classes_py.emg import *
+from classes_py.imu import *
 
 SIMULATION_MODE = True # if we use mqtt protocol -> False
 LED_RADIUS = 20 # radius of the joint id 
 OFF = "gray" # color of the joint id to symbolize it is not active
+DATA_DIR = os.path.join(os.getcwd(), "images") # dir of the images used by the gui
+ABB_IMG_PATH = os.path.join(DATA_DIR, 'abb_irb120.png') # img_path
 
 class RobotInterface:
     def __init__(self, root, image_path, num_leds=5, emgObj=None, inertialObj=None):
@@ -185,5 +188,5 @@ if __name__ == "__main__":
     emgObj = Emg("/emg", "/elef")
     imuObj = IMU("/j4", "/j5")
     # create interface, params = root, image_path, number_joints, emgObject=None, imuObject=None
-    app = RobotInterface(root, "abb_irb120.png", num_joints, emgObj)
+    app = RobotInterface(root, ABB_IMG_PATH, num_joints, emgObj)
     root.mainloop()
