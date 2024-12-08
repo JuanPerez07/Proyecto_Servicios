@@ -82,11 +82,11 @@ class Subscriber:
             while self.msg is None:
                 if time.time() - start_time > self.MAX_TIMEOUT:  
                     #print("Tiempo de espera agotado para recibir el mensaje.")
-                    return 0
+                    return None
                 if self.msg is not None:
                     time.sleep(0.01)  # Espera breve antes de verificar nuevamente
             return self.msg
-        return 0  # cannot connect to broker or simply topic does not exist
+        return None  # cannot connect to broker or simply topic does not exist
 """
 if __name__ == "__main__":
     topic = "/emg"
