@@ -12,7 +12,7 @@ Clase IMU
 from subscriber import Subscriber # class import
 from enum import Enum # enum type
 # class Action -> encode actions based on IMUsignals
-class Action(Enum):
+class Imu_action(Enum):
     REPOSO = 0
     HORARIO = 1
     ANTIHORARIO = 2
@@ -23,8 +23,8 @@ class IMU:
     def __init__(self, j4_topic, j5_topic, umbral=2.0):
         # instance variables
         self.umbral = float(umbral) # umbral ON/OFF
-        self.action_j4 = Action.REPOSO
-        self.action_j5 = Action.REPOSO
+        self.action_j4 = Imu_action.REPOSO
+        self.action_j5 = Imu_action.REPOSO
         self.j4 = 0
         self.j5 = 0 
         
@@ -96,20 +96,20 @@ class IMU:
         # classify action if read is valid
         if IMU.read_is_valid(j4, j5):
             if j4 == 0: # resposo del joint
-                self.setJ4Action(Action.REPOSO)
+                self.setJ4Action(Imu_action.REPOSO)
             elif j4 == 1:
-                self.setJ4Action(Action.HORARIO)  # giro horario del joint
+                self.setJ4Action(Imu_action.HORARIO)  # giro horario del joint
  
             elif j4 == 2:
-                self.setJ4Action(Action.ANTIHORARIO)  # giro antihorario del joint
+                self.setJ4Action(Imu_action.ANTIHORARIO)  # giro antihorario del joint
 
             if j5 == 0: # reposo del joint
-                self.setJ5Action(Action.REPOSO)
+                self.setJ5Action(Imu_action.REPOSO)
             elif j5 == 1:
-                self.setJ5Action(Action.HORARIO)  # giro horario del joint
+                self.setJ5Action(Imu_action.HORARIO)  # giro horario del joint
  
             elif j5 == 2:
-                self.setJ5Action(Action.ANTIHORARIO)  # giro antihorario del joint
+                self.setJ5Action(Imu_action.ANTIHORARIO)  # giro antihorario del joint
             
             return True
 		
