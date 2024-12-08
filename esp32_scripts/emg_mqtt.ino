@@ -1,3 +1,4 @@
+// Leer sensor EMG y envia mediante MQTT
 #include "config.h" // archivo de configuracion del protocolo MQTT
 
 #define PIN_FLEXION 32 //Se puede modificar
