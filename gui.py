@@ -1,5 +1,5 @@
 """
-class GUI -> interface for user info
+class GUI -> global interface for user info
 """
 import tkinter as tk
 import threading
