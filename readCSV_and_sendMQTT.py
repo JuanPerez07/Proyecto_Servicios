@@ -1,5 +1,5 @@
 """
-archivo para leer los datos de los csv y enviarlo al servidor MQTT
+archivo para leer los datos de .csv y enviarlo al servidor MQTT
 """
 #!/usr/env python3
 import os
