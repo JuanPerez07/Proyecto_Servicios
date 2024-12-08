@@ -12,6 +12,7 @@ from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from emg import *
+from imu import *
 
 # frecuencia lectura sensores del ABB
 FREQ =  2 # Hz
@@ -71,7 +72,7 @@ class ABB_IRB120(object):
 
 		# Variables
 		self.robot = robot #Robot
-		self.scene = scene #Escena
+        self.scene = scene #Escena
 		self.arm_group = arm_group #Grupo del brazo robotico
 		self.display_trajectory_publisher = display_trajectory_publisher
 		self.planning_frame = planning_frame
@@ -138,33 +139,85 @@ def main():
 	print ("Press Enter to execute")
 	raw_input()
 	move_home(ABB)
+	estado = 0
 	indice = 0
 	isOk = True
 	sentido = 0
+	multi_joint = False
+	indiceJ4 = 3
+	indiceJ5 = 4
+	sentidoJ4 = 0
+	sentidoJ5 = 0
 	while not rospy.is_shutdown():
 		try:
 			print("Conectandose al MQTT")
 			while isOk or not rospy.is_shutdown():
 				emgObj = Emg("/emg/flexion", "/emg/extension")
+				imuObj = IMU("/imu/j4", "/imu/j5")
 
-				isOk = emgObj.assign_action() # false pq no hay mqtt conectado
+				isOk = emgObj.assign_action() and imuObj.assign_action() # false pq no hay mqtt conectado
+				
 				# accion detectada
-				accion = emgObj.getAction()
-				print("Accion actual: ", accion)
-				print("Articulacion a controlar: ", indice)
-				if accion == Action.COCONTRACCION:
-					indice += 1
-					if indice == 4:
-						isOk = False
-				elif accion == Action.FLEXION:
-					sentido = 1
-				elif accion == Action.EXTENSION:
-					sentido = -1
-				else:
-					sentido = 0
+				emg_accion = emgObj.getAction()
+				imu_j4action = imuObj.getJ4Action()
+				imu_j5action = imuObj.getJ5Action()
+				
+				if estado == 0: #estado inicial de la máquina de estados
+                    multi_joint = False
+                    if emg_accion == EmgAction.COCONTRACCION:
+                        print("CONTROLANDO JOINT 1")
+                        estado = 1
+                        indice = 0
+                elif estado == 1: # controlar el joint 1
+                    if emg_accion == EmgAction.COCONTRACCION:
+                        print("CONTROLANDO JOINT 2")
+                        indice = 1
+                        estado = 2
+                    elif emg_accion == EmgAction.FLEXION:
+                        sentido = 1
+                    elif emg_accion == EmgAction.EXTENSION:
+                        sentido = -1
+                elif estado == 2: #controlar el joint 2
+                    if emg_accion == EmgAction.COCONTRACCION:
+                        print("CONTROLANDO JOINT 3")
+                        indice = 2
+                        estado = 3
+                    elif emg_accion == EmgAction.FLEXION:
+                        sentido = 1
+                    elif emg_accion == EmgAction.EXTENSION:
+                        sentido = -1
+                elif estado == 3: # controlar el joint 3
+                    if emg_accion == EmgAction.COCONTRACCION:
+                        print("CONTROLANDO JOINTS 4 Y 5")
+                        estado = 4
+                        
+                    elif emg_accion == EmgAction.FLEXION:
+                        sentido = 1
+                    elif emg_accion == EmgAction.EXTENSION:
+                        sentido = -1
+                elif estado == 4:
+                    multi_joint = True
+                    # control del joint 4
+                    if imu_j4action == Imu_action.REPOSO:
+                        sentidoJ4 = 0
+                    elif imu_j4action == Imu_action.HORARIO
+                        sentidoJ4 = 1
+                    elif imu_j4action == Imu_action.ANTIHORARIO
+                        sentidoJ4 = -1
+                    # control del joint 5
+                    if imu_j5action == Imu_action.REPOSO:
+                        sentidoJ5 = 0
+                    elif imu_j5action == Imu_action.HORARIO
+                        sentidoJ5 = 1
+                    elif imu_j5action == Imu_action.ANTIHORARIO
+                        sentidoJ5 = -1
+                                                
 				#enviar al robot que mueva en un sentido la articulacion i
-				speed_control(ABB, indice, sentido)
-
+				if multi_joint and estado != 0:
+                    speed_control(ABB, indice, sentido)
+                elif estado == 4 and nulti_joint:
+                    speed_control(ABB, indiceJ4, sentidoJ4)
+                    speed_control(ABB, indiceJ5, sentidoJ5)
 			move_home(ABB)
 		except rospy.ROSInterruptException:
 			move_home(ABB)
