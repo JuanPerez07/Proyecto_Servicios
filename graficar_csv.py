@@ -1,3 +1,4 @@
+# MOSTRAR DATOS DEL CSV en una grafica pra determinar umbrales 
 # Importar las bibliotecas necesarias
 import pandas as pd
 import numpy as np
