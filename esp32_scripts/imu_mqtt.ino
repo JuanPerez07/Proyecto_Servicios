@@ -151,7 +151,7 @@ void callback(char* topic, byte* payload, unsigned int length){
 void publishData(int rollState, int pitchState, bool buttonPressed) {
     client.publish("/imu/j4", String(rollState).c_str());
     client.publish("/imu/j5", String(pitchState).c_str());
-    client.publish("/imu/but", !buttonPressed ? "0" : "1");
+    client.publish("/button", !buttonPressed ? "0" : "1");
 
     Serial.print("Roll State: ");
     Serial.print(rollState);
