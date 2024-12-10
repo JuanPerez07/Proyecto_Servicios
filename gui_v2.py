@@ -1,13 +1,13 @@
 """
 class GUI -> global interface for user info
 """
-import tkinter as tk
+import Tkinter as tk
 import threading
 import time
 import random
 import os
 import numpy as np
-from tkinter import Canvas
+from Tkinter import Canvas
 from PIL import Image, ImageTk
 
 from classes_py.emg import *
@@ -59,11 +59,12 @@ class RobotInterface:
             self.led_value.append(OFF)
         
         self.create_boxes() #Create the boxes to the right of the image
-        
-        self.canvas.create_text(self.img_width + 120, 75, text='Muscle Action', anchor='nw', font='Arial 32', fill='black')
+        #TODO : modified
+        self.canvas.create_text(self.img_width + 50, 55, text='Muscle Action', anchor='nw', font='Arial 32', fill='black')
         
         # start thread 
-        self.simulation_thread = threading.Thread(target=self.simulate_movement, daemon=True)
+        self.simulation_thread = threading.Thread(target=self.simulate_movement)
+        self.simulation_thread.daemon = True
         self.simulation_thread.start()
         
     def create_boxes(self):
@@ -103,7 +104,7 @@ class RobotInterface:
             action.append(self.imu.getJ4Action())
             action.append(self.imu.getJ5Action())
         else:
-            print("Cannot update leds, wrong id given. ID must be {'emg'} or {'inertial'}")
+            print("Cannot update leds, wrong id given. ID must be 'emg' or 'inertial'")
         # classify action to swap color
         value_emg = None
         value_imu = [None, None]
@@ -182,17 +183,17 @@ class RobotInterface:
                 self.canvas.create_rectangle(self.img_width + 20, 170, self.img_width + 480, 320, fill='white') #Para que el texto no se superponga
                 
                 if action == EmgAction.REPOSO:
-                    self.canvas.create_text(self.img_width + 160, 225, text="REPOSO", anchor='nw', font='Arial 32', fill='black')    
+                    self.canvas.create_text(self.img_width + 120, 225, text="REPOSO", anchor='nw', font='Arial 20', fill='black')    
                 elif action == EmgAction.EXTENSION:
-                    self.canvas.create_text(self.img_width + 140, 225, text="EXTENSION", anchor='nw', font='Arial 32', fill='green')
+                    self.canvas.create_text(self.img_width + 100, 225, text="EXTENSION", anchor='nw', font='Arial 20', fill='green')
                 elif action == EmgAction.FLEXION:
-                    self.canvas.create_text(self.img_width + 160, 225, text="FLEXION", anchor='nw', font='Arial 32', fill='red')
+                    self.canvas.create_text(self.img_width + 120, 225, text="FLEXION", anchor='nw', font='Arial 20', fill='red')
                 elif action == EmgAction.COCONTRACCION:
-                    self.canvas.create_text(self.img_width + 50, 225, text="CONCONTRACCION", anchor='nw', font='Arial 32', fill='black')
+                    self.canvas.create_text(self.img_width + 30, 225, text="COCONTRACCION", anchor='nw', font='Arial 20', fill='black')
                 else:
-                    self.canvas.create_text(self.img_width + 50, 225, text="ERROR: NO DETECTED", anchor='nw', font='Arial 32', fill='black')
+                    self.canvas.create_text(self.img_width + 30, 225, text="ERROR: NO DETECTED", anchor='nw', font='Arial 20', fill='black')
                 
-                print(f"Controlling joint {joint}, detected: {action}")
+                #print(f"Controlling joint {joint}, detected: {action}")
                 if action == EmgAction.COCONTRACCION:
                     joint += 1
                     if joint == 3:

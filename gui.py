@@ -1,13 +1,13 @@
 """
 class GUI -> global interface for user info
 """
-import tkinter as tk
+import Tkinter as tk
 import threading
 import time
 import random
 import os
 import numpy as np
-from tkinter import Canvas
+from Tkinter import Canvas
 from PIL import Image, ImageTk
 
 from classes_py.emg import *
@@ -58,7 +58,8 @@ class RobotInterface:
             self.led_value.append(OFF)
 
         # start thread 
-        self.simulation_thread = threading.Thread(target=self.simulate_movement, daemon=True)
+        self.simulation_thread = threading.Thread(target=self.simulate_movement)
+        self.simulation_thread.daemon = True
         self.simulation_thread.start()
         
             
@@ -85,7 +86,7 @@ class RobotInterface:
             action.append(self.imu.getJ4Action())
             action.append(self.imu.getJ5Action())
         else:
-            print("Cannot update leds, wrong id given. ID must be {'emg'} or {'inertial'}")
+            print("Cannot update leds, wrong id given. ID must be 'emg' or 'inertial'")
         # classify action to swap color
         value_emg = None
         value_imu = [None, None]
@@ -160,7 +161,7 @@ class RobotInterface:
             
                 isOk = self.emg.assign_action(False)
                 action = self.emg.getAction()
-                print(f"Controlling joint {joint}, detected: {action}")
+                #print(f"Controlling joint {joint}, detected: {action}")
                 if action == EmgAction.COCONTRACCION:
                     joint += 1
                     if joint == 3:

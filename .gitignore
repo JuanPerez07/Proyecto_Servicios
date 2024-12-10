@@ -1,2 +1,2 @@
-# ignore all .png files in the directory
-*.png
+# ignore all pycache files
+/classes_py/*.pyc
