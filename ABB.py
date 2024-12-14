@@ -14,10 +14,10 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 # import classes 
 from classes_py.emg import *
 from classes_py.imu import *
-from gui import RobotInterface 
+from gui_v2 import RobotInterface 
 
 # frecuencia lectura sensores del ABB
-FREQ =  2 # Hz
+FREQ =  4 # Hz
 
 def all_close(goal, actual, tolerance):
     
@@ -106,6 +106,7 @@ class ABB_IRB120(object):
         return 1
 
 def speed_control(ABB, indice, sentido, velocidad=0.12):
+    print("Indice, sentido:", indice, sentido)
     joint = ABB.arm_group.get_current_joint_values()
     joint[indice] = joint[indice] + velocidad*sentido
     
@@ -161,15 +162,18 @@ def main():
                 emgObj = Emg("/emg/flexion", "/emg/extension")
                 imuObj = IMU("/imu/j4", "/imu/j5")
 
-                isOk = emgObj.assign_action() and imuObj.assign_action() # false pq no hay mqtt conectado
-                
+                button_state = button_connection()
+
+                if button_state == 0:
+                    isOk = emgObj.assign_action() and imuObj.assign_action() # false pq no hay mqtt conectado
+                else:
+                    break
                 # accion detectada
                 emg_accion = emgObj.getAction()
                 imu_j4action = imuObj.getJ4Action()
                 imu_j5action = imuObj.getJ5Action()
-                button_state = button_connection()
                 
-                if estado == 0: #estado inicial de la máquina de estados
+                if estado == 0: #estado inicial de la maquina de estados
                     multi_joint = False
                     indice = 0
                     sentido = 0
@@ -250,11 +254,12 @@ def main():
                         indice = 0
                         sentidoJ4 = 0
                         sentidoJ5 = 0
-                                                
+
                 #enviar al robot que mueva en un sentido la articulacion i
-                if multi_joint and estado != 0:
+                if not multi_joint:
                     speed_control(ABB, indice, sentido)
-                elif estado == 4 and nulti_joint:
+                else:
+                    print("Indice J5:", imu_j5action)
                     speed_control(ABB, indiceJ4, sentidoJ4)
                     speed_control(ABB, indiceJ5, sentidoJ5)
             move_home(ABB)
