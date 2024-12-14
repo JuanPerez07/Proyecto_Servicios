@@ -218,8 +218,8 @@ if __name__ == "__main__":
     # number of joints
     num_joints = 5
     # create emgObj and assign values
-    emgObj = Emg("/emg", "/elef")
-    imuObj = IMU("/j4", "/j5")
+    emgObj = Emg("/emg/flexion", "/emg/extension")
+    imuObj = IMU("/imu/j4", "/imu/j5")
     # create interface, params = root, image_path, number_joints, emgObject=None, imuObject=None
-    app = RobotInterface(root, ABB_IMG_PATH, num_joints, emgObj)
+    app = RobotInterface(root, ABB_IMG_PATH, num_joints, emgObj, imuObj)
     root.mainloop()
