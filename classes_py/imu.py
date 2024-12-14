@@ -42,10 +42,10 @@ class IMU:
         self.action_j5 = action
     
     def setJ4(self, joint_mov):
-        self.j4 = int(joint_mov)
+        self.j4 = float(joint_mov)
 
     def setJ5(self, joint_mov):
-        self.action_j5 = int(joint_mov)
+        self.j5 = float(joint_mov)
     
     """
     GETTERS    
@@ -67,7 +67,7 @@ class IMU:
     """
     @classmethod
     def read_is_valid(cls, j4_value, j5_value): 
-        return j4_value is not None and j4_value >= 0 and j4_value <=2 and j5_value is not None and j5_value >= 0 and j5 <= 2
+        return j4_value is not None and j4_value >= 0 and j4_value <=2 and j5_value is not None and j5_value >= 0 and j5_value <= 2
 
     """
     INSTANCE METHODS
@@ -80,7 +80,7 @@ class IMU:
         
         # set the topic names
         sub_j4.setTopic(IMU.J4_TOPIC)
-        sub_j5.setTopic(IMU.J4_TOPIC)
+        sub_j5.setTopic(IMU.J5_TOPIC)
 
         # save values read from the broker
         self.setJ4(sub_j4.getMsg())

@@ -15,6 +15,9 @@ Clase emg
 from classes_py.subscriber import Subscriber
 #from subscriber import Subscriber # class import
 from enum import Enum # enum type
+
+UMBRAL = 2.0 # menos de 2 voltios significa activar musc
+
 # class Action -> encode actions based on emg signals
 class EmgAction(Enum):
     REPOSO = 1
@@ -24,7 +27,7 @@ class EmgAction(Enum):
 # class Emg
 class Emg:
     # Constructor based on topic names and umbral default a 2 Voltios
-    def __init__(self, flex_topic, ext_topic, umbral=2.0):
+    def __init__(self, flex_topic, ext_topic, umbral=UMBRAL):
         # instance variables
         self.umbral = float(umbral) # umbral ON/OFF
         self.ext = 0
@@ -97,13 +100,13 @@ class Emg:
         threshold = self.getUmbral()
         # classify action if read is valid
         if Emg.read_is_valid(flex, ext):
-            if flex < threshold and ext < threshold: # doble activacion muscular
+            if flex < threshold and ext > threshold: # doble activacion muscular
                 self.setAction(EmgAction.COCONTRACCION)
         
-            elif flex < threshold and ext >= threshold:
+            elif flex < threshold and ext <= threshold:
                 self.setAction(EmgAction.FLEXION)  # Solo flexion activa
  
-            elif ext < threshold and flex >= threshold:
+            elif ext < threshold and flex <= threshold:
                 self.setAction(EmgAction.EXTENSION)  # Solo extension activa
         
             else:
