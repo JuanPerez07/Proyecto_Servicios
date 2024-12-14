@@ -104,6 +104,7 @@ if __name__ == "__main__":
             pub.publish("/button", 0)
             time.sleep(1.0 / FREQ_PUB)  # intervalo entre publicaciones
         # fin de la simulacion 
-        pub.publish("/button", 1)
+        for i in range(5):
+            pub.publish("/button", 1)
         # Desconectar al finalizar
         pub.disconnect()
