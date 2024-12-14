@@ -13,12 +13,18 @@ from PIL import Image, ImageTk
 from classes_py.emg import *
 from classes_py.imu import *
 
-SIMULATION_MODE = True # if we use mqtt protocol -> False
+SIMULATION_MODE = False # if we use mqtt protocol must be false
 LED_RADIUS = 20 # radius of the joint id 
 OFF = "gray" # color of the joint id to symbolize it is not active
 DATA_DIR = os.path.join(os.getcwd(), "images") # dir of the images used by the gui
 ABB_IMG_PATH = os.path.join(DATA_DIR, 'abb_irb120.png') # img_path
 LED_IMG_PATH = os.path.join(DATA_DIR, 'led_colour_code.png') # img_path
+FREQ = 4 # hz
+
+def button_connection():
+    sub_bt = Subscriber(Subscriber.server_mqtt, Subscriber.puerto_mqtt)
+    sub_bt.setTopic("/button")
+    return int(sub_bt.getMsg())
 
 class RobotInterface:
     def __init__(self, root, image_path, num_leds=5, emgObj=None, inertialObj=None):
@@ -84,7 +90,7 @@ class RobotInterface:
 
     def create_leds(self, led_radius):
         # create each led_axis for each joint
-        for i in range(self.num_leds):
+        for i in range(self.num_leds): #[0,1,2,3,4]
             self.led_axis[i] = self.canvas.create_oval(
                 self.led_pos[i][0] - led_radius, self.led_pos[i][1] - led_radius,
                 self.led_pos[i][0] + led_radius, self.led_pos[i][1] + led_radius,
@@ -96,13 +102,13 @@ class RobotInterface:
         self.canvas.itemconfig(self.led_axis[i], fill=self.led_value[i])
 
     def update_leds(self, id, joint): # given the i-joint we control and an id for the sensor responsible
-        action = None
+        action, action_list = None, None
         if id == 'emg': # emg control
             action = self.emg.getAction()
-        elif id == 'inertial':
-            action = []
-            action.append(self.imu.getJ4Action())
-            action.append(self.imu.getJ5Action())
+        elif id == 'imu':
+            action_list = []
+            action_list.append(self.imu.getJ4Action())
+            action_list.append(self.imu.getJ5Action())
         else:
             print("Cannot update leds, wrong id given. ID must be 'emg' or 'inertial'")
         # classify action to swap color
@@ -123,17 +129,30 @@ class RobotInterface:
                     value_emg = None
                 
             else: # inertial sens control
-                if action[0] == Imu_action.REPOSO:
-                    value[0] = OFF
+                # joint4 control
+                if action_list[0] == Imu_action.REPOSO:
+                    value_imu[0] = OFF
 
-                elif action[0] == Imu_action.ANTIHORARIO: # giro positivo
-                    value[0] = "green"
+                elif action_list[0] == Imu_action.ANTIHORARIO: # giro positivo
+                    value_imu[0] = "green"
 
-                elif action[0] == Imu_action.HORARIO: # giro negativo: clockwise
-                    value[0] = "red"
+                elif action_list[0] == Imu_action.HORARIO: # giro negativo: clockwise
+                    value_imu[0] = "red"
 
                 else:
-                    value = None
+                    value_imu[0] = None
+                # joint5 control
+                if action_list[1] == Imu_action.REPOSO:
+                    value_imu[1] = OFF
+
+                elif action_list[1] == Imu_action.ANTIHORARIO: # giro positivo
+                    value_imu[1] = "green"
+
+                elif action_list[1] == Imu_action.HORARIO: # giro negativo: clockwise
+                    value_imu[1] = "red"
+
+                else:
+                    value_imu[1] = None
 
         except Exception as e:
             print("Error codificando value del led segun action", e)
@@ -147,7 +166,7 @@ class RobotInterface:
                     self.set_leds(joint-i)
             
             elif joint == 0: # set the rest of joints OFF, joints => {1,2,3,4}
-                for i in range(self.num_leds - 1):
+                for i in range(self.num_leds - 1): # 4 iters -> [0,1,2,3]
                     self.led_value[i+1] = OFF
                     self.set_leds(i+1)
             # set the current joint we are controlling 
@@ -160,14 +179,18 @@ class RobotInterface:
                 self.led_value[i] = OFF
                 self.set_leds(i)
             # set the current joints -> last 2 dofs of the ABB
-            for j in range(2): # j = [0, 1]
-                self.led_value[joint + j] = value_imu[j]
-                self.set_leds(joint + j)
+            j = 1 # joint = 3
+            self.led_value[joint] = value_imu[j-1] # joint4
+            self.set_leds(joint)
+            self.led_value[joint+1] = value_imu[j] # joint5
+            self.set_leds(joint+1)
+                
         
     
     def simulate_movement(self):
         """Simula los mensajes de los 3 primeros DOFs del ABB"""
         isOk = True
+        id_str = 'emg'
         joint = 0
         while True:
             if SIMULATION_MODE: # sin conexion a sensores mediante MQTT
@@ -198,26 +221,48 @@ class RobotInterface:
                     joint += 1
                     if joint == 3:
                         joint = 0
+                        id_str = 'imu'
                 # Actualizar LEDs segun los mensajes simulados
                 self.update_leds('emg', joint)
 
                 time.sleep(1)  # Espera de 1 segundo entre simulaciones
 
             else:
-                if joint < 3:
-                    isOk = self.emg.assign_action() # asignar accion segun sensores de mqtt
-                    action = self.emg.getAction()
-                    if action == EmgAction.COCONTRACCION:
+                button_state = button_connection()
+				# if pressed button returns to the starting state joint =0, id_str = 'emg'
+                if button_state == 1:
+                    id_str = 'emg'
+                    joint = 0
+                if button_state == 0 and self.emg.assign_action() and self.imu.assign_action():
+                    action_imuJ4 = self.imu.getJ4Action()
+                    action_imuJ5 = self.imu.getJ5Action()
+                    action_emg = self.emg.getAction()
+                    # actualizar leds
+                    self.update_leds(id_str, joint)
+                    # mostrar acciones de emg en la interfaz
+                    self.canvas.create_rectangle(self.img_width + 20, 170, self.img_width + 480, 320, fill='white') #Para que el texto no se superponga
+                
+                    if action_emg == EmgAction.REPOSO:
+                        self.canvas.create_text(self.img_width + 120, 225, text="REPOSO", anchor='nw', font='Arial 20', fill='black')    
+                    elif action_emg == EmgAction.EXTENSION:
+                        self.canvas.create_text(self.img_width + 100, 225, text="EXTENSION", anchor='nw', font='Arial 20', fill='green')
+                    elif action_emg == EmgAction.FLEXION:
+                        self.canvas.create_text(self.img_width + 120, 225, text="FLEXION", anchor='nw', font='Arial 20', fill='red')
+                    elif action_emg == EmgAction.COCONTRACCION:
+                        self.canvas.create_text(self.img_width + 30, 225, text="COCONTRACCION", anchor='nw', font='Arial 20', fill='black')
+                    else:
+                        self.canvas.create_text(self.img_width + 30, 225, text="ERROR: NO DETECTED", anchor='nw', font='Arial 20', fill='black')
+                    # joint swap 
+                    if action_emg == EmgAction.COCONTRACCION:
                         joint += 1
-                    # actualizar LEDs
-                    self.update_leds('emg', joint)
-                else:
-                    isOk = self.imu.assign_action()
-                    jointj4 = 3
-                    jointj5 = 4
-                    self.update_leds('inertial', jointj4)
-                    self.update_leds('inertial', jointj5)
-                    
+                        if joint == 4:
+                            joint = 0
+                            id_str = 'emg' 
+                    # if we are in joint 3 -> id_str changes to 'imu'
+                    if joint == 3:
+                        id_str = 'imu'						
+                
+                time.sleep(1/FREQ)
 
 # Crear ventana de la interfaz
 if __name__ == "__main__":
