@@ -204,13 +204,20 @@ class RobotInterface:
                 time.sleep(1)  # Espera de 1 segundo entre simulaciones
 
             else:
-
-                isOk = self.emg.assign_action() # asignar accion segun sensores de mqtt
-                action = self.emg.getAction()
-                if action == EmgAction.COCONTRACCION:
-                    joint += 1
-                # actualizar LEDs
-                self.update_leds('emg', joint)
+                if joint < 3:
+                    isOk = self.emg.assign_action() # asignar accion segun sensores de mqtt
+                    action = self.emg.getAction()
+                    if action == EmgAction.COCONTRACCION:
+                        joint += 1
+                    # actualizar LEDs
+                    self.update_leds('emg', joint)
+                else:
+                    isOk = self.imu.assign_action()
+                    jointj4 = 3
+                    jointj5 = 4
+                    self.update_leds('inertial', jointj4)
+                    self.update_leds('inertial', jointj5)
+                    
 
 # Crear ventana de la interfaz
 if __name__ == "__main__":
