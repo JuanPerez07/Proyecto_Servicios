@@ -1,3 +1,4 @@
+// VERSION TESTEADA Y CORRECTA DE LECTURA DE SENSORES Y PUB CON MQQTT
 #include <Wire.h>
 #include <LIS3MDL.h>
 #include <LSM6.h>
