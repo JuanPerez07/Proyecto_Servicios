@@ -14,7 +14,7 @@ from PIL import Image, ImageTk
 from classes_py.emg import *
 from classes_py.imu import *
 
-SIMULATION_MODE = False # if we use mqtt protocol must be false
+SIMULATION_MODE = True # if we use mqtt protocol must be false
 LED_RADIUS = 20 # radius of the joint id 
 OFF = "gray" # color of the joint id to symbolize it is not active
 DATA_DIR = os.path.join(os.getcwd(), "images") # dir of the images used by the gui
@@ -68,6 +68,7 @@ class RobotInterface:
         self.create_boxes() #Create the boxes to the right of the image
         #TODO : modified
         self.canvas.create_text(self.img_width + 50, 55, text='Muscle Action', anchor='nw', font='Arial 32', fill='black')
+        self.canvas.create_text(self.img_width + 50, 355, text='Joint', anchor='nw', font='Arial 32', fill='black')
         
         # start thread 
         self.simulation_thread = threading.Thread(target=self.simulate_movement)
@@ -204,7 +205,7 @@ class RobotInterface:
                 isOk = self.emg.assign_action(False)
                 action = self.emg.getAction()
                 
-                self.canvas.create_rectangle(self.img_width + 20, 170, self.img_width + 480, 320, fill='white') #Para que el texto de la acción no se superponga
+                self.canvas.create_rectangle(self.img_width + 20, 170, self.img_width + 480, 320, fill='white') #Para que el texto de la accion no se superponga
                 self.canvas.create_rectangle(self.img_width + 20, 470, self.img_width + 480, 620, fill='white') #Para que el texto del "joint" no se superponga
                 
                 if action == EmgAction.REPOSO:
@@ -218,7 +219,7 @@ class RobotInterface:
                 else:
                     self.canvas.create_text(self.img_width + 30, 225, text="ERROR: NO DETECTED", anchor='nw', font='Arial 20', fill='black')
                 
-                #print(f"Controlling joint {joint}, detected: {action}")
+                
                 
                 self.canvas.create_text(self.img_width + 120, 525, text=str(joint+1), anchor='nw', font='Arial 20', fill='black')
                 
