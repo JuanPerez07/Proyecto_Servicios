@@ -12,7 +12,13 @@ import pandas as pd
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 # frecuencia de publicacion / lectura datos
-FREQ_PUB = 4  # Hz
+FREQ_PUB = 3  # Hz
+# csv path and files
+#DATA_CSV_DIR = os.path.join(os.getcwd(), "csv")
+#DATA_FILES = [os.path.join(DATA_CSV_DIR, f) for f in os.listdir(DATA_CSV_DIR) if f.endswith('.csv')]
+
+#DATA_FILE = os.path.join(os.getcwd(), "csv/datos_procesados_valores_15.csv")
+DATA_FILE = os.path.join(os.getcwd(), "csv/data.csv")
 
 # Class to publish data to the broker HiveMQ
 class Publisher:
@@ -27,9 +33,6 @@ class Publisher:
     puerto_mqtt = 8883
     # tiempo max espera
     MAX_TIMEOUT = 30  # secs
-    # csv path and files
-    DATA_CSV_DIR = os.path.join(os.getcwd(), "csv")
-    DATA_FILES = [os.path.join(DATA_CSV_DIR, f) for f in os.listdir(DATA_CSV_DIR) if f.endswith('.csv')]
 
     """
     CLASS CONSTRUCTOR
@@ -88,19 +91,19 @@ MAIN PROGRAM
 """
 if __name__ == "__main__":
     # Leer el archivo CSV
-    csv_file = Publisher.DATA_FILES[0]  # Change the index based on the required file
-    data = pd.read_csv(csv_file)  # datos del .csv
-
+    #csv_file = Publisher.DATA_FILES[1]  # Change the index based on the required file
+    #data = pd.read_csv(csv_file)  # datos del .csv
+    data = pd.read_csv(DATA_FILE)
     # Crear un objeto Publisher y conectarse al broker
     pub = Publisher(Publisher.server_mqtt, Publisher.puerto_mqtt, "esp32_emg", "Servicios25")
     if pub.connect():
         # Iterar sobre los datos y publicarlos
         for _, row in data.iterrows():
-            pub.publish("/timestamp", row["Tiempo"])
-            pub.publish("/emg/flexion", row["V_flexion"])
-            pub.publish("/emg/extension", row["V_extension"])
-            pub.publish("/imu/j4", row["Col_4"])
-            pub.publish("/imu/j5", row["Col_5"])
+            pub.publish("/timestamp", row["tiempo"])
+            pub.publish("/emg/flexion", row["flex"])
+            pub.publish("/emg/extension", row["ext"])
+            pub.publish("/imu/j4", row["joint4"])
+            pub.publish("/imu/j5", row["joint5"])
             pub.publish("/button", 0)
             time.sleep(1.0 / FREQ_PUB)  # intervalo entre publicaciones
         # fin de la simulacion 
