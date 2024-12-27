@@ -1,4 +1,3 @@
-// VERSION TESTEADA Y CORRECTA DE LECTURA DE SENSORES Y PUB CON MQQTT
 #include <Wire.h>
 #include <LIS3MDL.h>
 #include <LSM6.h>
@@ -7,7 +6,7 @@
 // Pines
 #define BUTTON_PIN 23 // GPIO del botón
 // Frecuencia de publicación
-#define PUBLISH_INTERVAL 500
+#define PUBLISH_INTERVAL 200
 
 #define PIN_FLEXION 32 //Se puede modificar
 #define PIN_EXTENSION 25 //Se puede modificar
@@ -68,8 +67,8 @@ public:
         tiempo_prev = millis();
     }
     int determineState(float angle) {
-        if (angle > 40) return 1;
-        if (angle < -40) return 2;
+        if (angle > 25) return 1;
+        if (angle < -25) return 2;
         return 0;
     }
 
@@ -145,9 +144,9 @@ void readSensor1(unsigned int delay_enviado){
   data_extension = analogRead(33);
   v_extension = (float)data_extension*(3.3/4095);
   
-  Serial.print("V_extension: ");
-  Serial.println(v_extension);
+
  
+
   
   delay(delay_enviado);
 }
@@ -161,8 +160,7 @@ void readSensor2(unsigned int delay_enviado){
   
   v_flexion = (float)data_flexion*(3.3/4095);
  
-  Serial.print("V_flexion: ");
-  Serial.println(v_flexion);
+ 
   
   delay(delay_enviado);
 }
@@ -206,14 +204,9 @@ void publishData(int rollState, int pitchState, bool buttonPressed) {
     client.publish("/imu/j4", String(rollState).c_str());
     client.publish("/imu/j5", String(pitchState).c_str());
     client.publish("/button", !buttonPressed ? "0" : "1");
-/*
-    Serial.print("Roll State: ");
-    Serial.print(rollState);
-    Serial.print(", Pitch State: ");
-    Serial.print(pitchState);
-    Serial.print(", Button: ");
-    Serial.println(buttonPressed ? "Pressed" : "Not Pressed");
-*/
+
+    
+
 }
 
 void setup() {
@@ -251,6 +244,7 @@ void loop() {
     // Leer estado del botón
     bool buttonPressed = digitalRead(BUTTON_PIN) == LOW;
 
+
     // Publicar datos a la nube cada 500 ms
     static unsigned long lastPublishTime = 0;
     if (millis() - lastPublishTime >= PUBLISH_INTERVAL) {
@@ -258,6 +252,15 @@ void loop() {
 
         int rollState = imuHandler.getRollState(); // Las variables a enviar al broker las haría tipo "static"
         int pitchState = imuHandler.getPitchState();
+        Serial.print(v_flexion);
+        Serial.print(",");
+        Serial.print(v_extension);
+        Serial.print(",");
+        Serial.print(rollState);
+        Serial.print(",");
+        Serial.print(pitchState);
+        Serial.print(",");
+        Serial.println(buttonPressed ? "Pressed" : "Not Pressed");
 
         publishData(rollState, pitchState, buttonPressed);
     }
