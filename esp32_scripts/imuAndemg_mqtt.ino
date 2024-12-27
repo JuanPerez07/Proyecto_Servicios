@@ -1,3 +1,4 @@
+// CODE TO READ FROM SENSORS AND PUBLISH TO MQTT BROKER
 #include <Wire.h>
 #include <LIS3MDL.h>
 #include <LSM6.h>
